@@ -1,0 +1,28 @@
+{
+  "name": "post-api",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "prettier": "prettier --write \"src/**/*.ts\" --config \".prettierrc.json\"",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/migration.ts",
+    "db:studio": "drizzle-kit studio",
+    "db:push": "drizzle-kit push",
+    "db:seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.2",
+    "@hono/zod-validator": "^0.4.1",
+    "better-sqlite3": "^11.5.0",
+    "drizzle-orm": "^0.35.3",
+    "hono": "^4.6.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^20.11.17",
+    "drizzle-kit": "^0.26.2",
+    "prettier": "3.3.3",
+    "tsx": "^4.7.1"
+  }
+}
