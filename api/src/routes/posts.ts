@@ -4,7 +4,8 @@ import { posts } from "../db/schema";
 import { eq } from "drizzle-orm/sql"
 import { HTTPException } from "hono/http-exception";
 import { zValidator } from '@hono/zod-validator'
-import { createPostSchema, deletePostSchema, getPostSchema, updatePostBodySchema, updatePostParamSchema } from "../validators/schemas";
+import { createPostSchema, deletePostSchema, getPostSchema, updatePostBodySchema, updatePostParamSchema, queryParamsSchema } from "../validators/schemas";
+import { asc, desc, like, count, SQL, and } from "drizzle-orm";
 
 const postsRoute = new Hono();
 
@@ -36,6 +37,46 @@ postsRoute.get("/posts/:id",
     return c.json(post);
   }
 );
+
+// Get all posts with optional sorting, filtering, searching, and pagination
+postsRoute.get("/posts", zValidator("query", queryParamsSchema), async (c) => {
+  const { sort, search, page = 1, limit = 10 } = c.req.valid("query");
+ 
+  const whereClause: (SQL | undefined)[] = [];
+  if (search) {
+    whereClause.push(like(posts.content, `%${search}%`));
+  }
+ 
+  const orderByClause: SQL[] = [];
+  if (sort === "desc") {
+    orderByClause.push(desc(posts.date));
+  } else if (sort === "asc") {
+    orderByClause.push(asc(posts.date));
+  }
+ 
+  const offset = (page - 1) * limit;
+ 
+  const [allPosts, [{ totalCount }]] = await Promise.all([
+    db
+      .select()
+      .from(posts)
+      .where(and(...whereClause))
+      .orderBy(...orderByClause)
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ totalCount: count() })
+      .from(posts)
+      .where(and(...whereClause)),
+  ]);
+ 
+  return c.json({
+    posts: allPosts,
+    page,
+    limit,
+    total: totalCount,
+  });
+});
 
 // Delete a post
 postsRoute.delete("/posts/:id", 
